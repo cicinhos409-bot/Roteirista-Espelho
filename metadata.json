@@ -1,0 +1,6 @@
+{
+  "name": "Roteirista Espelho",
+  "description": "Roteiros originais para canais de cidades, baseados em padrões de canais de referência.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
