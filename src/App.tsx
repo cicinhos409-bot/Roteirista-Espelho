@@ -65,7 +65,9 @@ export default function App() {
   const [systemInstruction, setSystemInstruction] = useState<string>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_PROMPT);
-      if (saved) return saved;
+      if (saved && saved.includes('CUMPRIMENTO OBRIGATÓRIO DA META DE PALAVRAS')) {
+        return saved;
+      }
     } catch (e) {
       console.error('Falha ao ler prompt salvo:', e);
     }
@@ -386,6 +388,8 @@ export default function App() {
               isStreaming={isGenerating}
               onRegenerate={handleGenerate}
               videoTheme={form.videoTheme}
+              targetDurationMinutes={form.targetDurationMinutes}
+              itemCount={form.itemCount}
             />
           ) : (
             <div className="border border-dashed border-zinc-800 rounded-2xl p-12 text-center bg-zinc-900/30">

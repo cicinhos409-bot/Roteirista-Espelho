@@ -18,6 +18,7 @@ import {
   ItemOrder,
   ClosingType,
 } from '../types';
+import { calculateWordBudget } from '../utils/promptBuilder';
 
 interface VideoConfigSectionProps {
   form: GeneratorFormState;
@@ -35,7 +36,7 @@ export const VideoConfigSection: React.FC<VideoConfigSectionProps> = ({
   validationError,
 }) => {
   const [showVerifiedDataHelp, setShowVerifiedDataHelp] = useState(false);
-  const calculatedWords = form.targetDurationMinutes * 150;
+  const budget = calculateWordBudget(form.targetDurationMinutes, form.itemCount);
 
   const quickThemeSuggestions = [
     '10 cidades mais ricas de Santa Catarina',
@@ -167,36 +168,58 @@ export const VideoConfigSection: React.FC<VideoConfigSectionProps> = ({
         </div>
 
         {/* Duração Alvo e Meta de Palavras */}
-        <div className="bg-zinc-950/70 border border-zinc-800/80 rounded-xl p-3.5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/20">
-              <Clock className="w-4 h-4" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-zinc-200">Duração Alvo do Vídeo:</span>
-                <span className="text-sm font-bold text-amber-400 font-mono">
-                  {form.targetDurationMinutes} minutos
-                </span>
+        <div className="bg-zinc-950/70 border border-zinc-800/80 rounded-xl p-4 space-y-3">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/20 flex-shrink-0">
+                <Clock className="w-4 h-4" />
               </div>
-              <p className="text-[11px] text-zinc-400">
-                Padrão de fala do YouTube: ~150 palavras por minuto
-              </p>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-zinc-200">Duração Alvo do Vídeo:</span>
+                  <span className="text-sm font-bold text-amber-400 font-mono">
+                    {form.targetDurationMinutes} minutos
+                  </span>
+                </div>
+                <p className="text-[11px] text-zinc-400">
+                  Ritmo padrão de narração do YouTube: ~150 palavras por minuto
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 w-full md:w-auto">
+              <input
+                type="range"
+                min={3}
+                max={25}
+                step={1}
+                value={form.targetDurationMinutes}
+                onChange={(e) => onChangeForm({ targetDurationMinutes: parseInt(e.target.value, 10) || 3 })}
+                className="w-full md:w-48 accent-amber-500 cursor-pointer"
+              />
+              <div className="bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-xs font-mono text-zinc-300 whitespace-nowrap shadow-sm">
+                Meta: <strong className="text-amber-400 font-bold">~{budget.targetWords.toLocaleString('pt-BR')}</strong> palavras
+              </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-4 w-full md:w-auto">
-            <input
-              type="range"
-              min={3}
-              max={25}
-              step={1}
-              value={form.targetDurationMinutes}
-              onChange={(e) => onChangeForm({ targetDurationMinutes: parseInt(e.target.value, 10) })}
-              className="w-full md:w-48 accent-amber-500 cursor-pointer"
-            />
-            <div className="bg-zinc-900 border border-zinc-800 px-3 py-1 rounded-lg text-xs font-mono text-zinc-300 whitespace-nowrap">
-              Meta: <strong className="text-amber-400">~{calculatedWords.toLocaleString('pt-BR')}</strong> palavras
+          {/* Word Budget Breakdown Badges */}
+          <div className="pt-2.5 border-t border-zinc-900 grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] font-mono">
+            <div className="bg-zinc-900/90 border border-zinc-800/80 rounded-lg px-2.5 py-1.5 text-zinc-300 flex flex-col">
+              <span className="text-[10px] text-zinc-500 uppercase">Abertura / Gancho</span>
+              <span className="font-semibold text-amber-300">~{budget.introWords} palavras</span>
+            </div>
+            <div className="bg-zinc-900/90 border border-zinc-800/80 rounded-lg px-2.5 py-1.5 text-zinc-300 flex flex-col">
+              <span className="text-[10px] text-zinc-500 uppercase">Cada Cidade ({form.itemCount}x)</span>
+              <span className="font-semibold text-emerald-400">~{budget.wordsPerBlock} palavras/bloco</span>
+            </div>
+            <div className="bg-zinc-900/90 border border-zinc-800/80 rounded-lg px-2.5 py-1.5 text-zinc-300 flex flex-col">
+              <span className="text-[10px] text-zinc-500 uppercase">Fechamento / CTA</span>
+              <span className="font-semibold text-amber-300">~{budget.outroWords} palavras</span>
+            </div>
+            <div className="bg-zinc-900/90 border border-zinc-800/80 rounded-lg px-2.5 py-1.5 text-zinc-300 flex flex-col">
+              <span className="text-[10px] text-zinc-500 uppercase">Total Estimado</span>
+              <span className="font-bold text-amber-400">~{budget.targetWords} palavras</span>
             </div>
           </div>
         </div>

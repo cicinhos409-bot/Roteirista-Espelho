@@ -1,7 +1,26 @@
 import { GeneratorFormState } from '../types';
 
+export function calculateWordBudget(targetDurationMinutes: number, itemCount: number) {
+  const targetWords = Math.max(300, targetDurationMinutes * 150);
+  const introWords = Math.min(220, Math.max(130, Math.round(targetWords * 0.10)));
+  const outroWords = Math.min(180, Math.max(90, Math.round(targetWords * 0.08)));
+  const criteriaWords = 40;
+  const remainingForBlocks = Math.max(100, targetWords - introWords - outroWords - criteriaWords);
+  const validItemCount = Math.max(1, itemCount);
+  const wordsPerBlock = Math.round(remainingForBlocks / validItemCount);
+
+  return {
+    targetWords,
+    introWords,
+    outroWords,
+    criteriaWords,
+    wordsPerBlock,
+  };
+}
+
 export function buildUserPrompt(form: GeneratorFormState): string {
   const parts: string[] = [];
+  const budget = calculateWordBudget(form.targetDurationMinutes, form.itemCount);
 
   parts.push(`=== ROTEIROS DE REFERÊNCIA FORNECIDOS PELO USUÁRIO ===`);
 
@@ -57,9 +76,6 @@ export function buildUserPrompt(form: GeneratorFormState): string {
   };
   parts.push(`- Ordem da lista: ${orderLabels[form.itemOrder] || form.itemOrder}`);
 
-  const targetWords = form.targetDurationMinutes * 150;
-  parts.push(`- Duração alvo: ${form.targetDurationMinutes} minutos (cerca de 150 palavras por minuto = meta de aproximadamente ${targetWords} palavras no texto corrido narrado)`);
-
   if (form.channelName.trim()) {
     parts.push(`- Nome do canal: ${form.channelName.trim()}`);
   }
@@ -93,8 +109,29 @@ export function buildUserPrompt(form: GeneratorFormState): string {
     parts.push(`  * Garantia: ${prod.warranty || 'garantia incondicional de 7 dias'}`);
   }
 
-  parts.push(`\n=== INSTRUÇÃO FINAL DE GERAÇÃO ===`);
-  parts.push(`Siga rigidamente o PROCESSO e as REGRAS DE QUALIDADE. Gere o roteiro ORIGINAL com as quatro seções obrigatórias:
+  // CRITICAL WORD COUNT & PACING SPECIFICATION
+  parts.push(`\n=== META CRÍTICA OBRIGATÓRIA DE EXTENSÃO E DURAÇÃO (REGRA INEGOCIÁVEL) ===`);
+  parts.push(`- Duração alvo do vídeo: ${form.targetDurationMinutes} MINUTOS.`);
+  parts.push(`- Padrão de velocidade de narração humana para YouTube: 150 palavras por minuto.`);
+  parts.push(`- META TOTAL OBRIGATÓRIA DE PALAVRAS NO '# 1. Roteiro final': EXATAMENTE APROXIMADAMENTE ${budget.targetWords} PALAVRAS.`);
+  parts.push(`\nDISTRIBUIÇÃO MATEMÁTICA DE PALAVRAS POR SEÇÃO DO ROTEIRO:`);
+  parts.push(`1. Abertura e Gancho inicial: ${budget.introWords} palavras (construa contextualização do estado/tema, conflito, pergunta de retenção e promessa do campeão).`);
+  parts.push(`2. Critério e Fonte oficial: ${budget.criteriaWords} palavras.`);
+  parts.push(`3. CADA UM DOS ${form.itemCount} ITENS/CIDADES DEVE TER EM MÉDIA ~${budget.wordsPerBlock} PALAVRAS DE TEXTO NARRADO.`);
+  parts.push(`   * PROIBIÇÃO ABSOLUTA DE RESUMOS: É terminantemente proibido entregar blocos curtos de 40 ou 50 palavras! Roteiros com blocos curtos serão REJEITADOS pelo usuário.`);
+  parts.push(`   * COMO ATINGIR ~${budget.wordsPerBlock} PALAVRAS EM CADA CIDADE:`);
+  parts.push(`     Escreva de 2 a 3 parágrafos narrativos densos e cadenciados para cada cidade, abordando:`);
+  parts.push(`     a) Localização geográfica, relevo, clima e como é a chegada na cidade;`);
+  parts.push(`     b) Os números oficiais com comparações fáceis de visualizar pelo ouvinte;`);
+  parts.push(`     c) A rotina dos moradores, principais avenidas ou bairros, estilo de vida e custo percebido;`);
+  parts.push(`     d) A atividade econômica motriz e curiosidade de identidade (cultura, culinária ou apelido histórico);`);
+  parts.push(`     e) Ponto de atenção sincero / lado B honesto (trânsito, distância de hospitais, agito noturno etc.);`);
+  parts.push(`     f) Pergunta retórica de conexão e gancho de suspense que introduz a próxima posição.`);
+  parts.push(`4. Encerramento e Chamada para Ação: ${budget.outroWords} palavras.`);
+  parts.push(`\nLEMBRE-SE: Ao final, a seção '# 1. Roteiro final' deve somar próxima de ${budget.targetWords} palavras de texto falado corrido. Não poupe palavras; escreva com riqueza e profundidade.`);
+
+  parts.push(`\n=== INSTRUÇÃO FINAL DE FORMATO ===`);
+  parts.push(`Gere o roteiro ORIGINAL com as quatro seções obrigatórias em Markdown:
 # 1. Roteiro final
 # 2. Análise dos concorrentes
 # 3. Pacote de publicação
@@ -109,7 +146,6 @@ export function parseMarkdownSections(markdown: string): {
   pacotePublicacao: string;
   checklistConferencia: string;
 } {
-  // Extract sections based on "# 1. Roteiro final", "# 2. Análise dos concorrentes", etc.
   const regex1 = /#\s*1\.\s*Roteiro final([\s\S]*?)(?=#\s*2\.\s*Análise dos concorrentes|$)/i;
   const regex2 = /#\s*2\.\s*Análise dos concorrentes([\s\S]*?)(?=#\s*3\.\s*Pacote de publicação|$)/i;
   const regex3 = /#\s*3\.\s*Pacote de publicação([\s\S]*?)(?=#\s*4\.\s*Checklist de conferência|$)/i;

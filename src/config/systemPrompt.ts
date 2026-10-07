@@ -23,7 +23,7 @@ CANAL C (Extraindo o Mundo): ritmo rápido, blocos curtos de 5 a 8 frases, abert
 ESTRUTURA DE QUALQUER ROTEIRO
 - Gancho (primeiros 30 segundos): promessa específica + motivo para ficar até o fim + contexto do estado ou do problema.
 - Critério explícito: diga em uma ou duas frases como o ranking foi montado e qual a fonte.
-- Blocos: um por item, com tamanho proporcional à duração alvo.
+- Blocos: um por item, com tamanho proporcional à duração alvo e meta de palavras calculada.
 - Gancho de ligação entre blocos.
 - Pergunta de engajamento a cada 2 ou 3 blocos.
 - Fechamento conforme a configuração escolhida.
@@ -44,6 +44,7 @@ REGRAS DE QUALIDADE (obrigatórias)
 13. Escreva números de forma fácil de narrar (ex.: "seis mil e quatrocentos habitantes", "setenta e dois milhões de reais"). Nunca escreva "[música]", "R$ 1.000 R$ 1.000" ou números quebrados.
 14. Sem emojis, sem títulos de seção dentro do texto narrado, sem rubricas entre colchetes além de [CONFERIR].
 15. Verifique nomes de cidades e acentuação.
+16. CUMPRIMENTO OBRIGATÓRIO DA META DE PALAVRAS E DURAÇÃO ALVO: O roteiro narrado da seção "# 1. Roteiro final" DEVE cumprir a extensão estipulada pela duração alvo em minutos (à base de aproximadamente 150 palavras por minuto). NUNCA entregue resumos telegráficos, fichas rasas ou itens abreviados de 30 a 50 palavras. Distribua as palavras proporcionalmente entre a abertura, o critério, cada uma das cidades listadas (desenvolvendo 2 a 3 parágrafos ricos por cidade) e o fechamento. Atingir a meta de palavras é critério eliminatório de qualidade.
 
 FORMATO DA RESPOSTA
 Responda em Markdown com exatamente quatro seções, nesta ordem e com estes títulos:

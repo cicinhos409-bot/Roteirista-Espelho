@@ -25,6 +25,8 @@ interface OutputTabsProps {
   isStreaming: boolean;
   onRegenerate: () => void;
   videoTheme: string;
+  targetDurationMinutes?: number;
+  itemCount?: number;
 }
 
 export const OutputTabs: React.FC<OutputTabsProps> = ({
@@ -36,6 +38,8 @@ export const OutputTabs: React.FC<OutputTabsProps> = ({
   isStreaming,
   onRegenerate,
   videoTheme,
+  targetDurationMinutes = 12,
+  itemCount = 10,
 }) => {
   const [activeTab, setActiveTab] = useState<'roteiro' | 'analise' | 'publicacao' | 'checklist'>('roteiro');
   const [copiedTab, setCopiedTab] = useState<string | null>(null);
@@ -43,7 +47,9 @@ export const OutputTabs: React.FC<OutputTabsProps> = ({
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
 
   const wordCount = useMemo(() => countWords(roteiroFinal), [roteiroFinal]);
-  const estimatedMinutes = Math.max(1, Math.round((wordCount / 150) * 10) / 10);
+  const estimatedMinutes = Math.max(0.1, Math.round((wordCount / 150) * 10) / 10);
+  const targetWords = targetDurationMinutes * 150;
+  const adherencePercent = targetWords > 0 ? Math.round((wordCount / targetWords) * 100) : 100;
 
   // Count [CONFERIR: ...] tags
   const conferirMatches = useMemo(() => {
@@ -263,91 +269,116 @@ ${checklistConferencia}
         {activeTab === 'roteiro' && (
           <div className="space-y-4">
             {/* Header info & local actions */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-zinc-800/80">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-mono bg-zinc-950 px-2.5 py-1 rounded-md border border-zinc-800 text-zinc-300">
-                  Palavras: <strong className="text-amber-400">{wordCount.toLocaleString('pt-BR')}</strong>
-                </span>
-                <span className="text-xs font-mono bg-zinc-950 px-2.5 py-1 rounded-md border border-zinc-800 text-zinc-300">
-                  Duração estimada: <strong className="text-amber-400">~{estimatedMinutes} min</strong> de narração
-                </span>
-                {conferirMatches > 0 ? (
-                  <span className="text-xs font-mono bg-amber-500/10 text-amber-300 px-2.5 py-1 rounded-md border border-amber-500/30 flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3 text-amber-400" />
-                    <strong>{conferirMatches}</strong> pontos marcados para conferir
+            <div className="flex flex-col gap-3 pb-3 border-b border-zinc-800/80">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-mono bg-zinc-950 px-2.5 py-1 rounded-md border border-zinc-800 text-zinc-300">
+                    Palavras geradas: <strong className="text-amber-400">{wordCount.toLocaleString('pt-BR')}</strong> / {targetWords.toLocaleString('pt-BR')} meta
                   </span>
-                ) : (
-                  <span className="text-xs font-mono bg-emerald-500/10 text-emerald-300 px-2.5 py-1 rounded-md border border-emerald-500/30 flex items-center gap-1">
-                    <Check className="w-3 h-3 text-emerald-400" />
-                    Sem pendências [CONFERIR]
+                  <span className="text-xs font-mono bg-zinc-950 px-2.5 py-1 rounded-md border border-zinc-800 text-zinc-300">
+                    Duração: <strong className="text-amber-400">~{estimatedMinutes} min</strong> / {targetDurationMinutes} min alvo
                   </span>
-                )}
-              </div>
-
-              {/* Reader font toggles & Download/Copy */}
-              <div className="flex items-center gap-2">
-                {/* Font size picker for teleprompter */}
-                <div className="flex items-center bg-zinc-950 border border-zinc-800 rounded-lg p-0.5">
-                  <button
-                    type="button"
-                    onClick={() => setTeleprompterSize('normal')}
-                    className={`px-2 py-1 rounded text-[11px] font-medium transition-colors ${
-                      teleprompterSize === 'normal' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'
+                  <span
+                    className={`text-xs font-mono px-2.5 py-1 rounded-md border flex items-center gap-1.5 ${
+                      adherencePercent >= 85 && adherencePercent <= 115
+                        ? 'bg-emerald-950/40 border-emerald-700/50 text-emerald-300'
+                        : adherencePercent > 115
+                        ? 'bg-blue-950/40 border-blue-700/50 text-blue-300'
+                        : 'bg-amber-950/40 border-amber-700/50 text-amber-300'
                     }`}
-                    title="Fonte padrão"
                   >
-                    1x
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setTeleprompterSize('large')}
-                    className={`px-2 py-1 rounded text-[11px] font-medium transition-colors ${
-                      teleprompterSize === 'large' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'
-                    }`}
-                    title="Fonte média (leitura confortável)"
-                  >
-                    1.25x
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setTeleprompterSize('xlarge')}
-                    className={`px-2 py-1 rounded text-[11px] font-medium transition-colors ${
-                      teleprompterSize === 'xlarge' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'
-                    }`}
-                    title="Fonte teleprompter (gravação em voz alta)"
-                  >
-                    1.5x
-                  </button>
+                    <span>{adherencePercent}% da meta de palavras</span>
+                  </span>
+                  {conferirMatches > 0 ? (
+                    <span className="text-xs font-mono bg-amber-500/10 text-amber-300 px-2.5 py-1 rounded-md border border-amber-500/30 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3 text-amber-400" />
+                      <strong>{conferirMatches}</strong> pontos para conferir
+                    </span>
+                  ) : (
+                    <span className="text-xs font-mono bg-emerald-500/10 text-emerald-300 px-2.5 py-1 rounded-md border border-emerald-500/30 flex items-center gap-1">
+                      <Check className="w-3 h-3 text-emerald-400" />
+                      Sem pendências [CONFERIR]
+                    </span>
+                  )}
                 </div>
 
-                {/* Baixar .txt */}
-                <button
-                  type="button"
-                  onClick={() => handleDownloadTxt(roteiroFinal, 'roteiro_narracao')}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-950 hover:bg-zinc-800 text-zinc-200 border border-zinc-800 transition-colors"
-                >
-                  <Download className="w-3.5 h-3.5 text-zinc-400" />
-                  <span>Baixar .txt</span>
-                </button>
+                {/* Reader font toggles & Download/Copy */}
+                <div className="flex items-center gap-2">
+                  {/* Font size picker for teleprompter */}
+                  <div className="flex items-center bg-zinc-950 border border-zinc-800 rounded-lg p-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setTeleprompterSize('normal')}
+                      className={`px-2 py-1 rounded text-[11px] font-medium transition-colors ${
+                        teleprompterSize === 'normal' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'
+                      }`}
+                      title="Fonte padrão"
+                    >
+                      1x
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTeleprompterSize('large')}
+                      className={`px-2 py-1 rounded text-[11px] font-medium transition-colors ${
+                        teleprompterSize === 'large' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'
+                      }`}
+                      title="Fonte média (leitura confortável)"
+                    >
+                      1.25x
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTeleprompterSize('xlarge')}
+                      className={`px-2 py-1 rounded text-[11px] font-medium transition-colors ${
+                        teleprompterSize === 'xlarge' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'
+                      }`}
+                      title="Fonte teleprompter (gravação em voz alta)"
+                    >
+                      1.5x
+                    </button>
+                  </div>
 
-                {/* Copiar */}
-                <button
-                  type="button"
-                  onClick={() => handleCopy(roteiroFinal, 'roteiro')}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 transition-colors"
-                >
-                  {copiedTab === 'roteiro' ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-emerald-400" />
-                      <span className="text-emerald-300">Copiado!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5" />
-                      <span>Copiar Roteiro</span>
-                    </>
-                  )}
-                </button>
+                  {/* Baixar .txt */}
+                  <button
+                    type="button"
+                    onClick={() => handleDownloadTxt(roteiroFinal, 'roteiro_narracao')}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-950 hover:bg-zinc-800 text-zinc-200 border border-zinc-800 transition-colors"
+                  >
+                    <Download className="w-3.5 h-3.5 text-zinc-400" />
+                    <span>Baixar .txt</span>
+                  </button>
+
+                  {/* Copiar */}
+                  <button
+                    type="button"
+                    onClick={() => handleCopy(roteiroFinal, 'roteiro')}
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 transition-colors"
+                  >
+                    {copiedTab === 'roteiro' ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        <span className="text-emerald-300">Copiado!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Copiar Roteiro</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Progress bar visual for word budget adherence */}
+              <div className="w-full bg-zinc-950 rounded-full h-1.5 border border-zinc-800 overflow-hidden">
+                <div
+                  className={`h-full transition-all duration-500 ${
+                    adherencePercent >= 85
+                      ? 'bg-gradient-to-r from-amber-500 to-emerald-400'
+                      : 'bg-amber-500'
+                  }`}
+                  style={{ width: `${Math.min(100, adherencePercent)}%` }}
+                />
               </div>
             </div>
 
